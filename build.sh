@@ -28,18 +28,29 @@ wasimake make
 # wasirun doesn't add the mapdir and we need it, so replace wasirun with running
 # wasmer directly
 # TODO: fix wasirun to add mapdir automatically (or with a switch)
+# TODO: it would be nice is wasmer allowed us to specify a starting dir - --dir
+#       is not that, but weirdly --dir=. sort of seems to accomplish that,
+#       then I could map / and just start in the cwd
 sed -i 's|wasirun|wasmer run --enable-all --dir=. --mapdir=/build/openssl-${OPENSSL_VERSION}:/build/openssl-${OPENSSL_VERSION}|' apps/openssl
+# additionally map /dev because it's needed for some tests (this'll be removed
+# when cross compile is fixed - see below)
+sed -i 's|--enable-all|--enable-all --mapdir=/dev:/dev|' apps/openssl
 sed -i 's|\.wasm |\.wasm -- |' apps/openssl
 # now the tests
-grep -lr wasirun test/* | xargs sed -i 's|wasirun|wasmer run --enable-all --dir=. --mapdir=/build/openssl-${OPENSSL_VERSION}:/build/openssl-${OPENSSL_VERSION}|'
+# sslapitest needs /tmp mapped, so just map it for everything
+grep -lr wasirun test/* | xargs sed -i 's|wasirun|wasmer run --enable-all --dir=. --mapdir=/tmp:/tmp --mapdir=/build/openssl-${OPENSSL_VERSION}:/build/openssl-${OPENSSL_VERSION}|'
 grep -lr wasmer test/* | xargs sed -i 's|\.wasm |\.wasm -- |'
-# also pass the entire environment to wasmer during testing
+# also pass the entire environment to wasmer
 # TODO: add a switch to wasmer to do this
-grep -lr wasmer test/* | xargs sed -i 's|--enable-all|--enable-all $\(python -c '\''import os;print reduce\(lambda x, y: x+" --env="+y[0]+"="+y[1], filter\(lambda x: False if "=" in x[1] or not x[1] else True, os.environ.items\(\)\), "")'\'')|'
-
-# sysdefaulttest also needs: --env=OPENSSL_CONF="$OPENSSL_CONF"
-# ssl_test also needs:  --env=TEST_CERTS_DIR="$TEST_CERTS_DIR" --env=CTLOG_FILE="$CTLOG_FILE"
+sed -i '/^wasmer run.*/i args=\(\); for v in $\(compgen -e\); do if [[ ${!v} == "" ]]; then continue; fi; args+=\( --env="$v=${!v}" \); done' apps/openssl
+sed -i 's/--enable-all/--enable-all "${args[@]}"/' apps/openssl
+# now the tests
+grep -lr wasmer test/* | xargs sed -i '/^wasmer run.*/i args=\(\); for v in $\(compgen -e\); do if [[ ${!v} == "" ]]; then continue; fi; args+=\( --env="$v=${!v}" \); done'
+grep -lr wasmer test/* | xargs sed -i 's/--enable-all/--enable-all "${args[@]}"/'
 
 # Testing -test_errstr: this will always fail because of linux/wasi mismatches -
 # TODO: not needed if we fix cross compile in configdata.pm
-make TESTS="-test_errstr" test
+# rehash triggers a permission denied error in WASI for some tests - needs investigation
+# test_x509_store - depends on rehash working
+# test_ca - calls to rename appear to be broken for missing files in WASI
+make TESTS="-test_rehash -test_x509_store -test_ca -test_errstr" test
