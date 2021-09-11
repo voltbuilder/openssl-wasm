@@ -1,0 +1,22 @@
+name: Build openssl.wasm
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag openssl-wasm:latest
+    - name: Build openssl.wasm
+      run: docker run openssl-wasm --name openssl-wasm-container
+    - name: Copy openssl.wasm out of container
+      run: docker cp openssl-wasm-container:/build/openssl.wasm .
