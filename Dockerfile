@@ -10,4 +10,4 @@ WORKDIR /build
 COPY build.sh .
 COPY openssl-${OPENSSL_VERSION}.patch  .
 
-#RUN build.sh
+ENTRYPOINT ["/build/build.sh"]
