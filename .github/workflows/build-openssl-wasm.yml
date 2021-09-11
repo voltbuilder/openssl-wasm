@@ -2,9 +2,8 @@ name: Build openssl.wasm
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - "v*.*.*"
 
 jobs:
 
@@ -22,6 +21,5 @@ jobs:
       run: docker cp openssl-wasm-container:/build/openssl.wasm .
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: openssl.wasm
