@@ -54,3 +54,5 @@ grep -lr wasmer test/* | xargs sed -i 's/--enable-all/--enable-all "${args[@]}"/
 # test_x509_store - depends on rehash working
 # test_ca - calls to rename appear to be broken for missing files in WASI
 make TESTS="-test_rehash -test_x509_store -test_ca -test_errstr" test
+
+cp apps/openssl.wasm ..
