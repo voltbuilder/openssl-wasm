@@ -2,7 +2,15 @@
 
 OpenSSL compiled for WASM. This passes nearly all of the test suite and attempts to stick as closely as possible to the standard build process. The entire process is documented below.
 
-Currently the 1.1.1 line of OpenSSL is supported. Version 3.0.0 will be supported soon.
+We've done our best to verify this implementation is secure, and we've been using it in our own [product](https://volt.build/VoltSigner/) for months with no issues.
+
+## Rationale
+
+You might wonder what makes this different from a few other existing implementations of OpenSSL for WASM:
+
+* Maintained - this implementation supports the latest 1.1.1 release, and will support 3.0.0 soon. 
+* Documented - all the choices made when building are documented below.
+* Passes tests - nearly the entire OpenSSL test suite is passing, and work continues to bring that to 100% by submitting patches to upstream projects.
 
 ## Releases
 
